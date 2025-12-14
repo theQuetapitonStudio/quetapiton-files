@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sun System | Quetapiton</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; }
+
+        /* Estilos do painel de informações */
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            display: none; 
+            z-index: 100;
+        }
+        #info-panel h2 {
+            margin-top: 0;
+            color: #4CAF50; /* Cor de destaque */
+        }
+        #info-panel p {
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        #close-info {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 99;
+        }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="info-panel">
+        <span id="close-info">&times;</span>
+        <h2 id="planet-name"></h2>
+        <p id="planet-description"></p>
+    </div>
+
+    <div id="instructions">
+        Clique nos planetas para saber sobre eles.
+    </div>
+
+    <script>
+        
+        // --- FUNÇÃO AUXILIAR PARA GERAR TEXTURAS COM CANVAS ---
+        // Cria uma textura simples com cor de base e alguns "detalhes" (como nuvens ou manchas)
+        function createCanvasTexture(color, detailColor, detailDensity = 0) {
+            const size = 128;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext('2d');
+
+            // Cor de fundo principal
+            context.fillStyle = color;
+            context.fillRect(0, 0, size, size);
+
+            // Adiciona detalhes (manchas/nuvens)
+            if (detailDensity > 0) {
+                context.fillStyle = detailColor;
+                for (let i = 0; i < detailDensity * 50; i++) {
+                    const radius = Math.random() * size * 0.05 + 2;
+                    const x = Math.random() * size;
+                    const y = Math.random() * size;
+                    context.beginPath();
+                    context.arc(x, y, radius, 0, Math.PI * 2);
+                    context.fill();
+                }
+            }
+            
+            // Cria a textura a partir do Canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true; // Necessário para texturas criadas dinamicamente
+            return texture;
+        }
+
+        // --- 1. CONFIGURAÇÃO BÁSICA ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        // Fundo preto puro (sem textura de estrelas)
+        renderer.setClearColor(0x000000, 1);
+        scene.background = new THREE.Color(0x000000);
+
+        // Posição inicial da câmera
+        camera.position.set(0, 150, 300);
+        camera.lookAt(0, 0, 0);
+
+        // --- 2. LUZES ---
+        const ambientLight = new THREE.AmbientLight(0x333333);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xFFFFFF, 2, 2000);
+        pointLight.position.set(0, 0, 0);
+        scene.add(pointLight);
+
+        // --- 3. CRIAÇÃO DO SOL E DOS PLANETAS ---
+
+        const sphereGeometry = new THREE.SphereGeometry(1, 32, 32); 
+
+        // O SOL (Textura Canvas Laranja/Amarelo)
+        const sunTexture = createCanvasTexture('rgb(255, 100, 0)', 'rgb(255, 255, 0)', 3);
+        const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
+        const sun = new THREE.Mesh(sphereGeometry, sunMaterial);
+        sun.scale.set(20, 20, 20);
+        scene.add(sun);
+
+
+        // Array para armazenar os planetas para interação de clique
+        const clickableObjects = [];
+
+        // Informações sobre os planetas (mantidas do código anterior)
+        const planetInfo = {
+            "Sol": { name: "O Sol", description: "Estrela central do sistema solar. Esfera de plasma quente que irradia luz e calor." },
+            "Mercúrio": { name: "Mercúrio", description: "O menor e mais rápido planeta; rochoso e com extremos de temperatura." },
+            "Vênus": { name: "Vênus", description: "Planeta mais quente, envolto em uma atmosfera densa de dióxido de carbono." },
+            "Terra": { name: "Terra", description: "Nosso lar, o único planeta conhecido por abrigar vida e grandes quantidades de água líquida." },
+            "Marte": { name: "Marte", description: "O 'Planeta Vermelho' com paisagens desérticas e as maiores montanhas do sistema solar." },
+            "Júpiter": { name: "Júpiter", description: "O maior planeta, um gigante gasoso conhecido pela sua Grande Mancha Vermelha (uma tempestade gigante)." },
+            "Saturno": { name: "Saturno", description: "Famoso por seus anéis visíveis, compostos principalmente de gelo e rocha." },
+            "Urano": { name: "Urano", description: "Um gigante de gelo que gira 'de lado', com atmosfera azul-esverdeada fria." },
+            "Netuno": { name: "Netuno", description: "O planeta mais distante, um gigante de gelo com ventos extremamente rápidos." }
+        };
+
+
+        // Função auxiliar para criar um planeta (agora usando CanvasTexture)
+        function createPlanet(name, size, baseColor, detailColor, detailDensity, distance, orbitalSpeed, rotationalSpeed, ringInnerRadius, ringOuterRadius, ringColor) {
+            const orbitGroup = new THREE.Object3D();
+            scene.add(orbitGroup);
+
+            // Criação da textura via Canvas
+            const planetTexture = createCanvasTexture(baseColor, detailColor, detailDensity);
+            const planetMaterial = new THREE.MeshStandardMaterial({ map: planetTexture });
+            const planet = new THREE.Mesh(sphereGeometry, planetMaterial);
+            planet.scale.set(size, size, size);
+            planet.position.set(distance, 0, 0);
+            orbitGroup.add(planet);
+
+            // Adiciona anéis (agora como cor pura, sem textura)
+            if (ringInnerRadius && ringOuterRadius) {
+                const ringGeometry = new THREE.RingGeometry(ringInnerRadius, ringOuterRadius, 64);
+                const ringMaterial = new THREE.MeshBasicMaterial({
+                    color: ringColor,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.set(distance, 0, 0);
+                orbitGroup.add(ring);
+            }
+
+            planet.userData = {
+                name: name,
+                orbitalSpeed: orbitalSpeed,
+                rotationalSpeed: rotationalSpeed
+            };
+
+            clickableObjects.push(planet);
+            return { orbitGroup, planet };
+        }
+
+        // --- DEFINIÇÕES DOS PLANETAS (Tamanho, Cores, Detalhes, Distância, Velocidade) ---
+
+        // Mercúrio: Cinza escuro
+        const mercuryData = createPlanet(
+            "Mercúrio", 3, '#A9A9A9', '#707070', 3, 35, 0.04, 0.015
+        );
+        
+        // Vênus: Creme/Amarelo
+        const venusData = createPlanet(
+            "Vênus", 4.5, '#F5DEB3', '#D2B48C', 5, 55, 0.025, 0.008
+        );
+
+        // Terra: Azul/Verde
+        const earthData = createPlanet(
+            "Terra", 5, '#0077BE', '#3CB371', 10, 80, 0.015, 0.025
+        );
+
+        // Marte: Vermelho/Laranja
+        const marsData = createPlanet(
+            "Marte", 3.5, '#CC5500', '#FFD700', 4, 105, 0.01, 0.03
+        );
+
+        // Júpiter: Laranja claro/Branco
+        const jupiterData = createPlanet(
+            "Júpiter", 12, '#DDAA77', '#FFFFFF', 15, 160, 0.005, 0.04
+        );
+
+        // Saturno: Bege (com anéis amarelos claros)
+        const saturnData = createPlanet(
+            "Saturno", 10, '#E6D8A3', '#FFFFFF', 6, 220, 0.003, 0.035,
+            12, 20, 0xF5F5DC // Anéis de cor pura (Bege Claro)
+        );
+
+        // Urano: Ciano/Azul claro (com anéis azuis)
+        const uranusData = createPlanet(
+            "Urano", 8, '#70A4B2', '#FFFFFF', 2, 280, 0.002, 0.02,
+            9, 14, 0xADD8E6 // Anéis de cor pura (Azul Claro)
+        );
+
+        // Netuno: Azul escuro
+        const neptuneData = createPlanet(
+            "Netuno", 7.5, '#00008B', '#ADD8E6', 4, 340, 0.0015, 0.025
+        );
+
+        const planetsOrbitGroups = [mercuryData.orbitGroup, venusData.orbitGroup, earthData.orbitGroup, marsData.orbitGroup, jupiterData.orbitGroup, saturnData.orbitGroup, uranusData.orbitGroup, neptuneData.orbitGroup];
+        const planetsMeshes = [mercuryData.planet, venusData.planet, earthData.planet, marsData.planet, jupiterData.planet, saturnData.planet, uranusData.planet, neptuneData.planet];
+
+
+        // --- 4. INTERAÇÃO DE CLIQUE (Raycaster) ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const infoPanel = document.getElementById('info-panel');
+        const planetNameElem = document.getElementById('planet-name');
+        const planetDescriptionElem = document.getElementById('planet-description');
+        const closeInfoBtn = document.getElementById('close-info');
+
+        function onPlanetClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(clickableObjects);
+
+            if (intersects.length > 0) {
+                const clickedPlanet = intersects[0].object;
+                const name = clickedPlanet.userData.name;
+                
+                planetNameElem.textContent = planetInfo[name].name;
+                planetDescriptionElem.textContent = planetInfo[name].description;
+                infoPanel.style.display = 'block';
+            } else {
+                infoPanel.style.display = 'none';
+            }
+        }
+
+        renderer.domElement.addEventListener('click', onPlanetClick, false);
+
+        closeInfoBtn.addEventListener('click', () => {
+            infoPanel.style.display = 'none';
+        });
+
+        // --- 5. FUNÇÃO DE ANIMAÇÃO (RENDER LOOP) ---
+        const clock = new THREE.Clock(); 
+        const cameraRadius = 300; // Raio da órbita da câmera
+        const cameraSpeed = 0.05; // Velocidade de rotação da câmera
+        const cameraHeight = 150; // Altura da câmera
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 1. ROTAÇÃO E ÓRBITA DOS CORPOS
+            sun.rotation.y += 0.005;
+
+            planetsOrbitGroups.forEach(group => {
+                const speed = group.children[0].userData.orbitalSpeed;
+                group.rotation.y += speed;
+            });
+
+            planetsMeshes.forEach(planet => {
+                const speed = planet.userData.rotationalSpeed;
+                planet.rotation.y += speed;
+            });
+
+            // 2. CÂMERA GIRATÓRIA AUTOMÁTICA
+            const elapsedTime = clock.getElapsedTime();
+            // Calcula a posição XY (o plano orbital)
+            camera.position.x = Math.sin(elapsedTime * cameraSpeed) * cameraRadius;
+            camera.position.z = Math.cos(elapsedTime * cameraSpeed) * cameraRadius;
+            // Mantém a altura Y constante
+            camera.position.y = cameraHeight;
+            camera.lookAt(0, 0, 0); 
+            
+            renderer.render(scene, camera);
+        }
+
+        // --- 6. INICIAR E AJUSTAR (Responsividade) ---
+        animate(); 
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
