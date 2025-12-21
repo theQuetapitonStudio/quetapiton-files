@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>error156gui v2.0 - Documentation</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
+        header { background: #2c3e50; color: white; padding: 2rem; text-align: center; border-radius: 8px; }
+        .studio { color: #3498db; font-weight: bold; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .card { background: white; padding: 20px; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        code { color: #e74c3c; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table, th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #ecf0f1; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>error156gui <small>v2.0</small></h1>
+        <p>By <span class="studio">Quetapiton Studio</span></p>
+    </header>
+    <a href="error156gui.2.0.h" download> download lib </a>
+    <div class="card">
+        <h2>About</h2>
+        <p>A ultra-lightweight, <strong>header-only</strong> C library for creating Windows GUIs using native WinAPI. Simple, fast, and dependency-free.</p>
+    </div>
+
+    <div class="card">
+        <h2>Quick Start</h2>
+        <p>Define the implementation in your main C file:</p>
+        <pre>
+#define ERROR156_IMPLEMENTATION
+#include "error156gui.h"
+
+int main() {
+    e156_Window app = e156_Init("My App", 400, 300);
+    e156_Label(&app, "Hello World!", 20, 20, 100, 20);
+    e156_Button(&app, "Click Me", 20, 50, 80, 30, 1);
+
+    while(e156_Loop()) { Sleep(10); }
+    return 0;
+}</pre>
+    </div>
+
+    <div class="card">
+        <h2>Functions Reference</h2>
+        <table>
+            <tr><th>Function</th><th>Description</th></tr>
+            <tr><td><code>e156_Init</code></td><td>Creates the main window.</td></tr>
+            <tr><td><code>e156_Button</code></td><td>Adds a clickable button.</td></tr>
+            <tr><td><code>e156_Label</code></td><td>Adds text display.</td></tr>
+            <tr><td><code>e156_Input</code></td><td>Adds a text entry box.</td></tr>
+            <tr><td><code>e156_Checkbox</code></td><td>Adds a toggle checkbox.</td></tr>
+            <tr><td><code>e156_Loop</code></td><td>Handles window events.</td></tr>
+        </table>
+    </div>
+
+    <footer>
+        <p style="text-align: center; margin-top: 50px;">&copy;Quetapiton Studio</p>
+    </footer>
+</body>
+</html>
