@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine3D.hpp - Docs</title>
+    <style>
+        :root { --primary: #00ff88; --bg: #121212; --text: #e0e0e0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 5%; }
+        header { border-bottom: 2px solid var(--primary); padding-bottom: 20px; }
+        code { background: #252525; color: var(--primary); padding: 5px; border-radius: 4px; }
+        .card { background: #1e1e1e; padding: 20px; margin-top: 20px; border-radius: 8px; border: 1px solid #333; }
+        h1, h2 { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Engine3D.hpp 🚀</h1>
+        <p>A biblioteca 3D header-only mais simples para C++.</p>
+    </header>
+
+    <div class="card">
+        <h2>🚀 Início Rápido</h2>
+        <p>A <code>engine3d.hpp</code> usa o OpenGL nativo do sistema. Não requer downloads externos.</p>
+        <pre><code>
+#include "engine3d.hpp"
+
+e3d::Engine engine(1); // Usa OpenGL 1.1 por padrão
+
+void render() {
+    engine.BeginDrawing();
+    engine.SetCamera({0, 2, 5}, {0, 0, 0});
+    engine.DrawGrid(10, 1.0f);
+    engine.DrawCube({0, 0, 0}, 1.0f, e3d::RED);
+    engine.EndDrawing();
+}
+        </code></pre>
+    </div>
+
+    <div class="card">
+        <h2>🛠️ Funções Principais</h2>
+        <ul>
+            <li><code>Init()</code>: Configura profundidade e luz básica.</li>
+            <li><code>BeginDrawing()</code>: Limpa a tela para o próximo frame.</li>
+            <li><code>SetCamera()</code>: Posiciona o observador no mundo 3D.</li>
+            <li><code>DrawCube()</code>: Desenha um cubo sólido colorido.</li>
+        </ul>
+    </div>
+</body>
+</html>
