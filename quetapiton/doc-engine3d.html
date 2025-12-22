@@ -3,48 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Engine3D.hpp - Docs</title>
+    <title>Engine3D.hpp - Documentação Oficial</title>
     <style>
-        :root { --primary: #00ff88; --bg: #121212; --text: #e0e0e0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 5%; }
-        header { border-bottom: 2px solid var(--primary); padding-bottom: 20px; }
-        code { background: #252525; color: var(--primary); padding: 5px; border-radius: 4px; }
-        .card { background: #1e1e1e; padding: 20px; margin-top: 20px; border-radius: 8px; border: 1px solid #333; }
-        h1, h2 { color: var(--primary); }
+        :root { 
+            --primary: #00ff88; 
+            --bg: #0f0f0f; 
+            --surface: #1a1a1a;
+            --text: #e0e0e0;
+            --code-bg: #282a36;
+        }
+        body { 
+            font-family: 'Fira Code', 'Segoe UI', monospace; 
+            background: var(--bg); 
+            color: var(--text); 
+            line-height: 1.6; 
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
+        }
+        header { 
+            text-align: center;
+            border-bottom: 2px solid var(--primary); 
+            padding: 40px 0; 
+            margin-bottom: 30px;
+        }
+        h1 { color: var(--primary); margin: 0; font-size: 2.5em; }
+        h2 { color: var(--primary); border-left: 4px solid var(--primary); padding-left: 15px; margin-top: 40px; }
+        
+        .card { 
+            background: var(--surface); 
+            padding: 25px; 
+            margin-top: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        pre { 
+            background: var(--code-bg); 
+            padding: 15px; 
+            border-radius: 5px; 
+            overflow-x: auto;
+            border: 1px solid #444;
+        }
+        code { color: #f8f8f2; }
+        .highlight { color: var(--primary); font-weight: bold; }
+        
+        .terminal {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; }
+        th { color: var(--primary); }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Engine3D.hpp 🚀</h1>
-        <p>A biblioteca 3D header-only mais simples para C++.</p>
-    </header>
 
-    <div class="card">
-        <h2>🚀 Início Rápido</h2>
-        <p>A <code>engine3d.hpp</code> usa o OpenGL nativo do sistema. Não requer downloads externos.</p>
-        <pre><code>
+<header>
+    <h1>Engine3D.hpp</h1>
+    <p>Biblioteca 3D Header-Only: Simples, Rápida e Independente.</p>
+</header>
+
+<div class="card">
+    <h2>💻 Exemplo de Código Minimalista</h2>
+    <p>Crie um arquivo <code>main.cpp</code> e cole o código abaixo:</p>
+    <pre><code>
 #include "engine3d.hpp"
 
-e3d::Engine engine(1); // Usa OpenGL 1.1 por padrão
+int main() {
+    // Inicializa com OpenGL 1.1 (padrão do sistema)
+    e3d::Engine engine(1); 
+    
+    // Configurações iniciais de render
+    engine.Init();
 
-void render() {
-    engine.BeginDrawing();
-    engine.SetCamera({0, 2, 5}, {0, 0, 0});
-    engine.DrawGrid(10, 1.0f);
-    engine.DrawCube({0, 0, 0}, 1.0f, e3d::RED);
-    engine.EndDrawing();
+    while(true) { // Seu loop de janela (GLFW/SDL/Win32)
+        engine.BeginDrawing();
+        
+        engine.SetCamera({0, 5, 10}, {0, 0, 0});
+        
+        engine.DrawGrid(20, 1.0f);
+        engine.DrawCube({0, 0, 0}, 2.0f, e3d::RED);
+        
+        engine.EndDrawing();
+    }
+    return 0;
 }
-        </code></pre>
-    </div>
+    </code></pre>
+</div>
 
-    <div class="card">
-        <h2>🛠️ Funções Principais</h2>
-        <ul>
-            <li><code>Init()</code>: Configura profundidade e luz básica.</li>
-            <li><code>BeginDrawing()</code>: Limpa a tela para o próximo frame.</li>
-            <li><code>SetCamera()</code>: Posiciona o observador no mundo 3D.</li>
-            <li><code>DrawCube()</code>: Desenha um cubo sólido colorido.</li>
-        </ul>
+<div class="card">
+    <h2>🚀 Como Compilar (GCC)</h2>
+    <p>Como a engine utiliza as bibliotecas nativas de sistema, você não precisa baixar nada extra. Use os comandos abaixo no terminal:</p>
+    
+    <h3>No Windows (MinGW):</h3>
+    <div class="terminal">
+        g++ main.cpp -o app.exe -lopengl32 -lgdi32
     </div>
+    <p><small>* O link <code>-lopengl32</code> conecta com o driver de vídeo do Windows.</small></p>
+
+    <h3>No Linux (Ubuntu/Debian/Arch):</h3>
+    <div class="terminal">
+        g++ main.cpp -o app -lGL -lm
+    </div>
+    <p><small>* O link <code>-lGL</code> usa a biblioteca de sistema MESA ou drivers proprietários.</small></p>
+</div>
+
+
+
+<div class="card">
+    <h2>📚 Referência Rápida</h2>
+    <table>
+        <tr>
+            <th>Comando</th>
+            <th>Parâmetros</th>
+            <th>Descrição</th>
+        </tr>
+        <tr>
+            <td><code>Init()</code></td>
+            <td>Nenhum</td>
+            <td>Habilita Z-Buffer e cores padrão.</td>
+        </tr>
+        <tr>
+            <td><code>SetCamera()</code></td>
+            <td>(Pos, Target)</td>
+            <td>Define onde você está e para onde olha.</td>
+        </tr>
+        <tr>
+            <td><code>DrawCube()</code></td>
+            <td>(Pos, Size, Color)</td>
+            <td>Desenha um cubo sólido.</td>
+        </tr>
+        <tr>
+            <td><code>DrawGrid()</code></td>
+            <td>(Slices, Spacing)</td>
+            <td>Desenha o chão de referência (grade).</td>
+        </tr>
+    </table>
+</div>
+
+<footer>
+    <p style="text-align: center; margin-top: 50px; color: #666;">
+        Engine3D.hpp - Estilo Raylib para minimalistas.
+    </p>
+</footer>
+
 </body>
 </html>
