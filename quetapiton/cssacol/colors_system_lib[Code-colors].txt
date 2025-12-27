@@ -1,0 +1,8 @@
+1 = blue
+2 = green
+3 = skyblue
+4 = red
+5 = purple
+6 = yellow
+7 = white
+8 = gray
