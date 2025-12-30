@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Erromadeite Farm | Extreme Clicker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF0055; /* Rosa Ultra */
+            --secondary: #00FF95; /* Verde Elétrico */
+            --accent: #FFD700; /* Ouro */
+            --bg: #111;
+            --card: #222;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- UI SUPERIOR --- */
+        #top-bar {
+            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg) 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--primary);
+        }
+
+        #score-label { color: var(--secondary); font-size: 0.9rem; letter-spacing: 2px; }
+        #balance { font-size: 3.5rem; font-weight: 900; margin: 5px 0; text-shadow: 0 0 20px rgba(255, 0, 85, 0.5); }
+        #lps-display { color: #888; font-size: 1rem; }
+
+        /* --- ÁREA DE JOGO PRINCIPAL --- */
+        #game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #main-target {
+            width: 260px;
+            height: 260px;
+            background: var(--primary);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8rem;
+            box-shadow: 0 15px 0 #900, 0 20px 40px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.05s, box-shadow 0.05s;
+            position: relative;
+            z-index: 10;
+        }
+
+        #main-target:active {
+            transform: translateY(10px);
+            box-shadow: 0 5px 0 #900, 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- SHOP (LATERAL/INFERIOR) --- */
+        #shop {
+            background: var(--card);
+            height: 350px;
+            overflow-y: auto;
+            padding: 15px;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+        }
+
+        .item {
+            background: #333;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid transparent;
+        }
+
+        .item.available { border-color: var(--secondary); background: #3a3a3a; }
+        
+        .item-info b { display: block; font-size: 1.1rem; color: var(--secondary); }
+        .item-info span { font-size: 0.8rem; color: #aaa; }
+
+        .buy-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .buy-btn:disabled { background: #555; opacity: 0.5; }
+
+        /* --- BOTÃO PRESTÍGIO --- */
+        #prestige-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: black;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* --- ANIMAÇÃO DE CLIQUE --- */
+        .click-pop {
+            position: absolute;
+            color: var(--secondary);
+            font-weight: 900;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: popOut 0.6s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes popOut {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-150px) scale(1.5); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div id="score-label">SALDO TOTAL</div>
+        <div id="balance">0</div>
+        <div id="lps-display">Lucro: 0/seg</div>
+    </div>
+
+    <button id="prestige-btn" onclick="prestige()">VENDER FAZENDA (Bônus: +0%)</button>
+
+    <div id="game-area">
+        <div id="main-target" onclick="clickFarm(event)">🚜</div>
+    </div>
+
+    <div id="shop">
+        </div>
+
+<script>
+    // --- CONFIGURAÇÃO ---
+    let data = {
+        erros: 0,
+        totalEver: 0,
+        multiplier: 1,
+        prestigeBonus: 1,
+        upgrades: [
+            { id: 0, name: 'Semente Turbo', baseCost: 15, power: 1, count: 0, emoji: '🌱' },
+            { id: 1, name: 'Regador Automático', baseCost: 100, power: 8, count: 0, emoji: '💧' },
+            { id: 2, name: 'Super Fertilizante', baseCost: 1200, power: 45, count: 0, emoji: '🧪' },
+            { id: 3, name: 'Duto Elétrico', baseCost: 15000, power: 180, count: 0, emoji: '⚡' },
+            { id: 4, name: 'Fazendeiro Robô', baseCost: 150000, power: 1200, count: 0, emoji: '🤖' }
+        ]
+    };
+
+    // --- CARREGAR JOGO ---
+    const saved = localStorage.getItem('erromadeiteSave');
+    if(saved) {
+        const parsed = JSON.parse(saved);
+        // Merge para garantir que novos itens da lista não quebrem o save
+        data.erros = parsed.erros;
+        data.totalEver = parsed.totalEver || 0;
+        data.prestigeBonus = parsed.prestigeBonus || 1;
+        parsed.upgrades.forEach((u, i) => { if(data.upgrades[i]) data.upgrades[i].count = u.count; });
+    }
+
+    function save() {
+        localStorage.setItem('erromadeiteSave', JSON.stringify(data));
+    }
+
+    // --- LÓGICA ---
+    function clickFarm(e) {
+        let gain = 1 * data.prestigeBonus;
+        data.erros += gain;
+        data.totalEver += gain;
+        showParticle(e.clientX, e.clientY, `+${gain.toFixed(0)}`);
+        updateUI();
+    }
+
+    function buyItem(id) {
+        let item = data.upgrades[id];
+        let cost = Math.floor(item.baseCost * Math.pow(1.15, item.count));
+        
+        if(data.erros >= cost) {
+            data.erros -= cost;
+            item.count++;
+            updateUI();
+            save();
+        }
+    }
+
+    function calculateLPS() {
+        let lps = 0;
+        data.upgrades.forEach(u => {
+            lps += u.count * u.power;
+        });
+        return lps * data.prestigeBonus;
+    }
+
+    function prestige() {
+        let bonus = Math.floor(data.totalEver / 1000000);
+        if(confirm(`Vender sua fazenda por um bônus permanente de ${bonus}% de produção?`)) {
+            data.prestigeBonus += (bonus / 100);
+            data.erros = 0;
+            data.upgrades.forEach(u => u.count = 0);
+            save();
+            location.reload();
+        }
+    }
+
+    // --- INTERFACE ---
+    function updateUI() {
+        document.getElementById('balance').innerText = Math.floor(data.erros).toLocaleString();
+        document.getElementById('lps-display').innerText = `Lucro: ${calculateLPS().toLocaleString()}/seg`;
+        
+        // Exibir Prestige se tiver ganho total alto
+        if(data.totalEver > 1000000) {
+            let pBtn = document.getElementById('prestige-btn');
+            pBtn.style.display = 'block';
+            pBtn.innerText = `REINICIAR (Bônus: +${Math.floor(data.totalEver/1000000)}%)`;
+        }
+
+        const shop = document.getElementById('shop');
+        shop.innerHTML = '';
+        data.upgrades.forEach(u => {
+            let cost = Math.floor(u.baseCost * Math.pow(1.15, u.count));
+            let canAfford = data.erros >= cost;
+            
+            shop.innerHTML += `
+                <div class="item ${canAfford ? 'available' : ''}">
+                    <div class="item-info">
+                        <b>${u.emoji} ${u.name} (${u.count})</b>
+                        <span>Gera +${u.power}/s | Custo: ${cost.toLocaleString()}</span>
+                    </div>
+                    <button class="buy-btn" ${canAfford ? '' : 'disabled'} onclick="buyItem(${u.id})">
+                        COMPRAR
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    function showParticle(x, y, text) {
+        const p = document.createElement('div');
+        p.className = 'click-pop';
+        p.style.left = `${x - 20}px`;
+        p.style.top = `${y - 20}px`;
+        p.innerText = text;
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 600);
+    }
+
+    // LOOP
+    setInterval(() => {
+        data.erros += (calculateLPS() / 10);
+        updateUI();
+    }, 100);
+
+    // Save automático a cada 30 segundos
+    setInterval(save, 30000);
+
+    // Init
+    updateUI();
+</script>
+</body>
+</html>
